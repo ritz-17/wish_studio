@@ -1,0 +1,26 @@
+{
+  "name": "wish-studio",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "dotenv -e .env -- concurrently -k -n WEB,API -c cyan,magenta \"npm run dev --workspace=@wish-studio/web\" \"npm run dev --workspace=@wish-studio/api\"",
+    "build": "npm run build --workspace=@wish-studio/web && npm run build --workspace=@wish-studio/api",
+    "lint": "npm run lint --workspaces --if-present",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "db:generate": "npm run generate --workspace=@wish-studio/database",
+    "db:migrate": "dotenv -e .env -- npm run migrate --workspace=@wish-studio/database",
+    "db:studio": "dotenv -e .env -- npm run studio --workspace=@wish-studio/database"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "dotenv-cli": "^8.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

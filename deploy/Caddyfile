@@ -1,0 +1,17 @@
+# SITE_ADDRESS defaults to ":80" (plain HTTP on the server IP).
+# Set it to a domain such as "wishstudio.com" and Caddy fetches HTTPS certificates automatically.
+{$SITE_ADDRESS::80} {
+	encode gzip
+
+	handle /api/* {
+		reverse_proxy api:4000
+	}
+
+	handle /ws {
+		reverse_proxy api:4000
+	}
+
+	handle {
+		reverse_proxy web:3000
+	}
+}
