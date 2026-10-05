@@ -66,6 +66,26 @@ app.post("/api/wishes", async (request, response) => {
   }
 });
 
+app.get("/api/wishes/:id", async (request, response) => {
+  const id = request.params.id;
+  if (!/^[a-z0-9]{1,40}$/i.test(id)) {
+    response.status(404).json({ error: "Wish not found." });
+    return;
+  }
+
+  try {
+    const wish = await prisma.wish.findUnique({ where: { id } });
+    if (!wish) {
+      response.status(404).json({ error: "Wish not found." });
+      return;
+    }
+    response.json({ wish });
+  } catch (error) {
+    console.error("Unable to load wish:", error);
+    response.status(503).json({ error: "Could not load the wish. Check the database connection." });
+  }
+});
+
 websocketServer.on("connection", (socket, request) => {
   const origin = request.headers.origin;
   if (origin && !allowedOrigins.includes(origin)) {

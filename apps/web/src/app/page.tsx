@@ -76,6 +76,7 @@ export default function Home() {
   const selectedOccasion = occasions.find((item) => item.value === occasion) ?? occasions[0];
   const cleanRecipients = recipients.map((recipient) => recipient.trim()).filter(Boolean);
   const wishText = `${cleanRecipients.join(" & ")} — ${message.trim()}`;
+  const shareUrl = savedId && typeof window !== "undefined" ? `${window.location.origin}/wish/${savedId}` : "";
 
   function chooseOccasion(value: Occasion) {
     setOccasion(value);
@@ -136,7 +137,7 @@ export default function Home() {
       const result = (await response.json()) as { wish?: { id: string }; error?: string };
       if (!response.ok || !result.wish) throw new Error(result.error ?? "Could not save this wish.");
       setSavedId(result.wish.id);
-      setFeedback("Wish saved to your celebration book.");
+      setFeedback("Wish saved. Your share link is ready.");
     } catch (error) {
       setFeedback(error instanceof Error ? error.message : "Could not save this wish.");
     } finally {
@@ -147,15 +148,28 @@ export default function Home() {
   async function shareWish() {
     try {
       if (navigator.share) {
-        await navigator.share({ title: `${selectedOccasion.label} wish`, text: wishText });
+        await navigator.share(
+          shareUrl
+            ? { title: `${selectedOccasion.label} wish`, text: `A wish for ${cleanRecipients.join(" & ")}`, url: shareUrl }
+            : { title: `${selectedOccasion.label} wish`, text: wishText },
+        );
       } else {
-        await navigator.clipboard.writeText(wishText);
-        setFeedback("Wish copied to your clipboard.");
+        await navigator.clipboard.writeText(shareUrl || wishText);
+        setFeedback(shareUrl ? "Link copied to your clipboard." : "Wish copied to your clipboard.");
       }
     } catch (error) {
       if (error instanceof Error && error.name !== "AbortError") {
         setFeedback("Sharing isn’t available here. Copy the wish text instead.");
       }
+    }
+  }
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setFeedback("Link copied to your clipboard.");
+    } catch {
+      setFeedback("Clipboard access isn’t available in this browser. Copy the link above instead.");
     }
   }
 
@@ -285,7 +299,14 @@ export default function Home() {
                 <h3>{cleanRecipients.join(" & ")}<span>,</span></h3>
                 <p>{message}</p>
                 <div className="preview-signoff">A LITTLE WISH, JUST FOR YOU <span>♥</span></div>
-                {savedId && <p className="saved-reference">Saved as {savedId}</p>}
+              </div>
+            )}
+
+            {step === 4 && shareUrl && (
+              <div className="share-link">
+                <input aria-label="Share link" onFocus={(event) => event.target.select()} readOnly value={shareUrl} />
+                <button className="quiet-button" onClick={copyLink} type="button">Copy link</button>
+                <a className="quiet-button" href={shareUrl} rel="noreferrer" target="_blank">Open ↗</a>
               </div>
             )}
 
@@ -300,7 +321,7 @@ export default function Home() {
                   <button className="quiet-button" onClick={copyWish} type="button">Copy wish</button>
                   <button className="quiet-button" onClick={shareWish} type="button">Share ↗</button>
                   <button className="primary-button" disabled={saving || Boolean(savedId)} onClick={saveWish} type="button">
-                    {saving ? "Saving…" : savedId ? "Saved ✓" : "Save wish"}
+                    {saving ? "Saving…" : savedId ? "Saved ✓" : "Save & get link"}
                   </button>
                 </div>
               )}
