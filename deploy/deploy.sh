@@ -15,7 +15,8 @@ $compose up -d --remove-orphans
 for attempt in $(seq 1 30); do
   if curl -fsS http://localhost/api/health >/dev/null 2>&1; then
     echo "Healthy after ${attempt}s"
-    docker image prune -f >/dev/null
+    # -a also removes the previous release's images (they're tagged, so plain prune keeps them).
+    docker image prune -af >/dev/null
     exit 0
   fi
   sleep 1
